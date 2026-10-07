@@ -6,18 +6,28 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please login first' }, { status: 401 })
 
-  // 1. Get cart
+  // 1. Get cart (explicit alias so TypeScript knows the shape)
   const { data: cart } = await supabase
     .from('cart_items')
-    .select('product_id, quantity, products(name, price_cents)')
+    .select('product_id, quantity, products:products(name, price_cents)')
     .eq('user_id', user.id)
 
-  if (!cart || cart.length === 0)
+  const items = (cart ?? []).map((row) => {
+    const product = Array.isArray(row.products) ? row.products[0] : row.products
+    return {
+      product_id: row.product_id,
+      name: product?.name ?? 'Unknown item',
+      quantity: row.quantity,
+      price_cents: product?.price_cents ?? 0,
+    }
+  })
+
+  if (items.length === 0)
     return NextResponse.json({ error: 'Your cart is empty' }, { status: 400 })
 
   // 2. Calculate total
-  const total_cents = cart.reduce(
-    (sum, item) => sum + item.quantity * item.products.price_cents, 0
+  const total_cents = items.reduce(
+    (sum, item) => sum + item.quantity * item.price_cents, 0
   )
 
   // 3. Create the order
@@ -31,17 +41,17 @@ export async function POST() {
 
   // 4. Save order items
   await supabase.from('order_items').insert(
-    cart.map((item) => ({
+    items.map((item) => ({
       order_id: order.id,
       product_id: item.product_id,
       quantity: item.quantity,
-      price_cents: item.products.price_cents,
+      price_cents: item.price_cents,
     }))
   )
 
   // 5. Send confirmation email via Mailgun
-  const itemList = cart
-    .map((i) => `<li>${i.products.name} × ${i.quantity} — $${((i.products.price_cents * i.quantity) / 100).toFixed(2)}</li>`)
+  const itemList = items
+    .map((i) => `<li>${i.name} × ${i.quantity} — $${((i.price_cents * i.quantity) / 100).toFixed(2)}</li>`)
     .join('')
 
   try {
@@ -77,7 +87,7 @@ export async function POST() {
       console.log('✅ EMAIL SENT OK to', user.email)
     } else {
       const errText = await mailgunRes.text()
-      console.error('❌ MAILGUN ERROR for', user.email, ':', errText)
+      console.error('❌ MAILGUN ERROR:', errText)
     }
   } catch (e) {
     console.error('❌ EMAIL FETCH FAILED:', e)
