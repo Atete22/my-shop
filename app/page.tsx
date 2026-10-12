@@ -67,8 +67,11 @@ export default function Home() {
           </h1>
           {userName ? (
             <div className="flex items-center gap-4">
-              <a href="/checkout" className="text-sm text-[#6b6357] hover:text-[#b08d57]">
+                            <a href="/checkout" className="text-sm text-[#6b6357] hover:text-[#b08d57]">
                 Bag ({cartCount})
+              </a>
+              <a href="/orders" className="text-sm text-[#6b6357] hover:text-[#b08d57]">
+                Orders
               </a>
               <span className="text-sm text-[#6b6357]">
                 Welcome, <strong className="text-[#1a1a1a]">{userName}</strong> 💎
