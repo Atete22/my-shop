@@ -73,6 +73,9 @@ export default function Home() {
               <a href="/orders" className="text-sm text-[#6b6357] hover:text-[#b08d57]">
                 Orders
               </a>
+                            <a href="/orders" className="text-sm text-[#6b6357] hover:text-[#b08d57]">
+                Orders
+              </a>
               <span className="text-sm text-[#6b6357]">
                 Welcome, <strong className="text-[#1a1a1a]">{userName}</strong> 💎
               </span>
