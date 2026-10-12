@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createApiClient, getToken } from '@/lib/supabase-api'
 
-export async function POST() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export async function POST(request: Request) {
+  const token = getToken(request)
+  const supabase = token ? createApiClient(token) : await createClient()
+  const { data: { user } } = await supabase.auth.getUser(token ?? undefined)
   if (!user) return NextResponse.json({ error: 'Please login first' }, { status: 401 })
 
   // 1. Get cart (explicit alias so TypeScript knows the shape)
