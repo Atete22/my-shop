@@ -7,7 +7,7 @@ import Link from 'next/link'
 type OrderItem = {
   quantity: number
   price_cents: number
-  products: { name: string }[]
+  products: { name: string } | { name: string }[]
 }
 
 type Order = {
@@ -40,6 +40,11 @@ export default function Orders() {
       setLoading(false)
     })
   }, [])
+
+  const nameOf = (it: OrderItem) => {
+    const p = Array.isArray(it.products) ? it.products[0] : it.products
+    return p?.name ?? 'Item'
+  }
 
   return (
     <main className="min-h-screen bg-[#faf7f2]">
@@ -83,7 +88,7 @@ export default function Orders() {
                   {(o.order_items ?? []).map((it, idx) => (
                     <div key={idx} className="flex justify-between py-1 text-sm">
                       <span className="text-[#6b6357]">
-                        {it.products?.[0]?.name ?? 'Item'} × {it.quantity}
+                        {nameOf(it)} × {it.quantity}
                       </span>
                       <span>${((it.price_cents * it.quantity) / 100).toFixed(2)}</span>
                     </div>
